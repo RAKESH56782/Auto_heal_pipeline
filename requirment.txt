@@ -1,1 +1,165 @@
-Make folder Path 
+
+##### python pipeline #####
+
+The Auto Heal Pipeline solution is designed to validate the running status of process in a pipeline and takes necessary action to bring up the services. The developed shell script is used for the auto healing/recovery of pipeline. If any script/process is down in a pipeline, then auto heal script will restart it and tracks the process status in a separate log file. This document details the working mechanism, deployment producer steps of auto heal script, enable new pipeline, disable existing pipeline. 
+
+
+
+2.	 Deployment Procedure
+• Pre-requisite
+First check the version of python/java on Linux Ubuntu/CentOS where you want to deployment. This will be useful when deploying pipeline auto heal script.
+
+To check the Python version on Linux Ubuntu/Debian/CentOS:
+	python --version
+ 
+ 
+To check the Java version on Linux Ubuntu/Debian/CentOS:
+	java -version
+ 
+
+Check directory “/data/monitoring/” whether it already existing or not. If not follow the below steps in Deployment steps.
+
+To check the directory : run this command on terminal.
+	ls -d /data/monitoring/
+
+ 
+     • Deployment Steps
+Step 1: Create a directory & make autoHealPython.sh file and copy paste from given file content on this file:
+	mkdir -p /data/monitoring/
+	vi autoHealPython.sh
+
+To save a file, you must first be in command mode. Press Esc to enter command mode, and then type :wq to write and quit the file. If you’ve made mistakes along the way while editing and want to back out all non-saved changes, enter command mode by pressing Esc and type :q! This command quits without saving any changes and exits vi.
+
+Step3: Create directory “/data/logs/service_monitoring/python/” for storing the logs of the script.
+	mkdir -p /data/logs/service_monitoring/python/
+
+Step 4: Create a runningPipelineInfo file under “/data/monitoring/python/”.
+Open the runningPipelineInfo file and include details of pipeline’s python/java script in below format.
+	mkdir -p /data/monitoring/python/
+	cd /data/monitoring/python/
+	vi runningPipelineInfo
+
+             Add below line in file:
+
+enabled:yes|ts:28042023_100034|exec_cmd:python /data/monitoring/test/test.py str=Example|pipeline_name:test.py str=Example
+ 
+           where:
+            1.enabled: 
+                  If you want to auto heal your script, then put enable is yes.
+      If you want to disable your script for auto healing, then make enabled as no.
+2. ts: current timestamp when script execution started.
+3. exec_cmd: Command to run python/java service/scripts of pipeline. Parameters required to start the service should also be included here, if any.
+4. pipeline_name: Name of your python/java script/service.
+For python2 - python /data/monitoring/test/test.py
+For python3 - python3 /data/monitoring/test/test.py
+
+Note: runningPipelineInfo file must not be empty. It must have only one line entry. And make sure there is no empty line present in the file.  
+
+
+• Post checks
+
+Check whether auto heal pipeline shell script is on desired path. If yes, then check directories and added the input line in runningPipelineInfo file.
+
+
+3.	Various Execution scenario
+
+Scenario 1: 
+Now if your python/java script file is on desired path, then you need to run auto heal pipeline script.  
+	cd /data/monitoring/test/
+	./python_auto_heal.sh
+
+  
+Here is our monitoring log file output after running the script. >> 
+	cd /data/service_monitoring/python/
+	cat python_auto_heal.log
+               or
+	vi /data/logs/service_monitoring/python_auto_heal.log
+
+  
+In this monitoring log file, we can see in the initial stage when our python script is ready to run, we shall start the shell script and it will initiate the python pipeline. It will give the process id of running script.
+
+PIPELINE_STATUS_INFO_FILE_LATEST file where you can see the pipeline status = “Restarted”. It means it starts Python pipeline and will also show the file name for that Pipeline. 
+	cd /data/monitoring/python/
+	cat runningPipelineInfo
+
+  
+ 
+ 
+Scenario 2: 
+If our python script is already in running state, then our shell script output will be -   
+Here you can see the output for the Monitoring log file >> 
+  
+No need to start the pipeline again because the pipeline is already in the running state. 
+  
+ 
+PIPELINE_STATUS_INFO_FILE_LATEST file name as “pipelineStatusInfo” where you can see the pipeline status= “Running” it means pipeline already is in running condition. 
+ 
+Scenario 3:
+ If there is an error in python file, then the shell script will attempt to restart it. 
+
+Here you can see the output of Monitoring log file >> 
+  
+Here shell script is trying to initiate the python script. But it won’t start because there will be an error on python Script, hence it will show an Error Message - facing issue with the Starting Pipeline.  
+ 
+PIPELINE_STATUS_INFO_FILE_LATEST file name as “pipelineStatusInfo” where the pipeline status= Stopped. 
+ 
+
+
+Here is pipelinestatusInfo_03_05_2023 file, in this we can see respective day status of pipeline. It will be created automatically for every day.
+
+	cd /data/monitoring/python/
+	ls
+	cat runningPipelineInfo_03_05_2023
+
+
+Note: 
+If you are running for any other file like java script or other script, then you must change the set of variables in pipeline Auto heal shell script.
+
+
+4.	How to enable for a new pipeline
+Suppose now you want to deploy a shell script for Java pipeline in Linux/ubuntu where auto heal python pipeline script is already running.
+Step 1: If directory not created then create a directory “/data/monitoring/” & make a copy of “autohealPython.sh” file and rename it  “autohealJava.sh” in that path.
+	 mkdir -p /data/monitoring/
+	cd /data/monitoring/
+	cp autohealPython.sh autohealJava.sh
+ 
+Step 2: Create directory “/data/logs/service_monitoring/java/” for storing the logs of the script.
+	mkdir -p /data/logs/service_monitoring/java/
+
+Note: Now you must change directory name if you don’t then it may be conflicting previous running pipeline.
+
+Step 3: Create a runningPipelineInfo file under “/data/monitoring/python/”.
+Open the runningPipelineInfo file and include details of pipeline’s python/java script in below format.
+	mkdir -p /data/monitoring/java/
+	cd /data/monitoring/java
+	vi runningPipelineInfo
+
+             Add below line in file:
+
+enabled:yes|ts:28042023_100034|exec_cmd:javac /data/monitoring/test/test.java str=Example|pipeline_name:test.java str=Example
+
+Step 5: also, you must do this set of variable changes in autohealJava.sh file.
+This is how you must change paths in shell script like given screen shot:
+ 
+
+Note: Do not change any line of shell script.
+
+
+Now run “autohealJava.sh” script and output will be like as mentioned above execution scenario.
+	cd /data/monitoring/
+	./autohealJava.sh
+
+
+5.	How to Disable an existing Pipeline 
+
+•	Open the runningPipelineInfo file.
+	cd /data/monitoring/java
+	vi runningPipelineInfo
+
+            First search your pipeline_name & change that line as given below line:-
+
+enabled:No|ts:28042023_100034|exec_cmd:javac /data/monitoring/test/test.java str=Example|pipeline_name:test.java str=Example
+If you want to disable your script for auto healing, then make enabled as No. process of
+
+
+
